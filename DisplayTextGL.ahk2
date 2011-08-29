@@ -1,0 +1,175 @@
+#SingleInstance, Force
+
+; simple test script. It's not working atm, but it did yesterday... dunno what broke.
+
+    Width := 800
+    Height := 600
+    Lines := ["1340 <Acuena> dunnu how to check that??"
+    , "1340 <Worm002> wiggly worm"
+    , "1340 <Acuena> msgbox it?"
+    , "1341 <Uberi> yep"
+    , "1341 <Uberi> MsgBox `% A_EventInfo"
+    , "1341 <Uberi> before that line"]
+    
+    Gosub, Initialize
+    OnExit, ExitSub
+    SetTimer, Update, 30
+return
+
+Initialize:
+    gl := new OpenGL(True)
+    
+    Gui, +LastFound +Resize +MinSize150x150
+    hWindow := WinExist()
+    
+    hDC := DllCall("GetDC","UInt",hWindow)
+    VarSetCapacity(Struct,40,0)
+        NumPut(40  ,Struct, 0,"UShort")
+        NumPut(1   ,Struct, 2,"UShort")
+        NumPut(0x25,Struct, 4,"UInt")  ;PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER
+        NumPut(0   ,Struct, 8,"UChar") ;PFD_TYPE_RGBA
+        NumPut(24  ,Struct, 9,"UChar") ;Color bit depth
+        NumPut(16  ,Struct,23,"UChar") ;Depth buffer bit depth
+    DllCall("gdi32\SetPixelFormat","UInt",hDC,"Int",DllCall("gdi32\ChoosePixelFormat","UInt",hDC,Ptr,&Struct,"Int"),Ptr,&Struct)
+    hRC := gl.wglCreateContext(hDC)
+    gl.wglMakeCurrent(hDC,hRC)
+    
+    gl.glShadeModel(GL_SMOOTH)
+    gl.glClearColor(0.0, 0.0, 0.0, 0.0)
+    gl.glClearDepth(1.0)
+    gl.glEnable(GL_DEPTH_TEST)
+    gl.glDepthFunc(GL_LESS)
+    gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
+    gl.glEnable(GL_RESCALE_NORMAL)
+    gl.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+    
+    gl.glEnable(GL_LIGHTING)
+    gl.glEnable(GL_LIGHT0)
+    ;gl.glEnable(GL_LINE_SMOOTH)
+    ;gl.glEnable(GL_BLEND)
+    
+    VarSetCapacity(Struct,16)
+        NumPut(1,Struct,0,"Float")
+        NumPut(1,Struct,4,"Float")
+        NumPut(1,Struct,8,"Float")
+        NumPut(1,Struct,12,"Float") ;light with color 1,1,1
+    gl.glLightfv(GL_LIGHT0, GL_AMBIENT, &Struct)
+    
+        NumPut(1,Struct,0,"Float")
+        NumPut(1,Struct,4,"Float")
+        NumPut(1,Struct,8,"Float")
+        NumPut(1,Struct,12,"Float")
+    gl.glLightfv(GL_LIGHT0, GL_DIFFUSE, &Struct)
+    
+        NumPut(Temp1,Struct,0,"Float")
+        NumPut(Temp2,Struct,4,"Float")
+        NumPut(Temp3,Struct,8,"Float")
+        NumPut(Temp4,Struct,12,"Float")
+    gl.glLightfv(GL_LIGHT0, GL_SPECULAR, &Struct)
+    
+        NumPut(0,Struct,0,"Float")
+        NumPut(0,Struct,4,"Float")
+        NumPut(0,Struct,8,"Float")
+        NumPut(1,Struct,12,"Float") ;positional light at 0,0,0
+    gl.glLightfv(GL_LIGHT0, GL_POSITION, &Struct) 
+    gl.glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.01)
+    
+    FontList := gl.glGenLists(256)
+    hFont := DllCall("CreateFont","Int",-16,"Int",0,"Int",0,"Int",0,"Int",100,"UInt",0,"UInt",0,"UInt",0,"UInt",0,"UInt",4,"UInt",0,"UInt",4,"UInt",0,"Str","Arial")
+    hTempFont := DllCall("SelectObject","UInt",hDC,"UInt",hFont)
+    
+    VarSetCapacity(GlyphMetrics,6144,0) ;256 * 24
+    gl.wglUseFontOutlines(hDC,0,256,FontList,0,0.1,1,&GlyphMetrics)
+    
+    DllCall("SelectObject","UInt",hDC,"UInt",hTempFont)
+    DllCall("DeleteObject","UInt",hFont)
+    TextType := A_IsUnicode ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE
+    gl.glListBase(FontList)
+    
+    VerticalPosition := -0.4
+    HorizontalPosition := -9.2
+    Angle := -25
+    newlinepos := 0
+    scale := 1
+    
+    Gui, Show, w%Width% h%Height%, 3D Scroller
+return
+
+Update:
+    Thread, NoTimers
+    gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    gl.glLoadIdentity()
+    ;gl.glScalef(scale, scale, scale)
+    gl.glRotatef(Angle, 1.0, 0.0, 0.0)
+    gl.glTranslatef(HorizontalPosition, VerticalPosition + newlinepos, -20)
+    
+    if round(newlinepos, 2)
+        newlinepos := newlinepos + 0.1
+    
+    loop % lines._maxindex()
+    {
+        line := lines[lines._maxindex() - (A_Index - 1)]
+        gl.glPushMatrix()
+        gl.glCallLists(StrLen(line), TextType, &line)
+        gl.glPopMatrix()
+        gl.glTranslatef(0, 1, 0)
+    }
+    
+    gl.SwapBuffers(hDC)
+return
+
+ResizeScene(PosX,PosY,Width,Height,FieldOfView := 45.0,ClipNear := 0.5,ClipFar := 100.0)
+{
+    global
+    local MaxX, MaxY
+    gl.glViewport(PosX,PosY,Width,Height)
+    gl.glMatrixMode(GL_PROJECTION)
+    gl.glLoadIdentity()
+    MaxY := ClipNear * Tan(FieldOfView * 0.00872664626)
+    MaxX := MaxY * (Width / Height)
+    gl.glFrustum(0 - MaxX, MaxX, 0 - MaxY, MaxY, ClipNear, ClipFar)
+    gl.glMatrixMode(GL_MODELVIEW)
+}
+
+GuiSize:
+    Width := A_GuiWidth OR 1
+    Height := A_GuiHeight OR 1
+    ResizeScene(0,0,Width,Height,55.0,0.5,Width / 4)
+return
+
+GuiClose:
+ExitApp
+
+ExitSub:
+    gl.glDeleteLists(FontList,256)
+    gl.wglMakeCurrent(0,0)
+    gl.wglDeleteContext(hRC)
+ExitApp
+
+#IfWinActive 3D Scroller
+
+Up::VerticalPosition += 1
+Down::VerticalPosition -= 1
+
+!Up::VerticalPosition += 0.1
+!Down::VerticalPosition -= 0.1
+
++Up::Angle++
++Down::Angle--
+
+Right::HorizontalPosition++
+Left::HorizontalPosition--
+!Right::HorizontalPosition += 0.1
+!Left::HorizontalPosition -= 0.1
+
+F12::
+    newlinepos := 0
+    newline := ""
+    InputBox, newline
+    lines.insert(newline)
+    newlinepos -= 1
+return
+
++F12::lines.remove(1)
+
+#Include OpenGL.ahk2
