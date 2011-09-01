@@ -1,7 +1,5 @@
 #SingleInstance, Force
 
-; simple test script. It's not working atm, but it did yesterday... dunno what broke.
-
     Width := 800
     Height := 600
     Lines := ["1340 <Acuena> dunnu how to check that??"
@@ -17,6 +15,7 @@
 return
 
 Initialize:
+    hGDI32 := DllCall("LoadLibrary","Str","gdi32")
     gl := new OpenGL(True)
     
     Gui, +LastFound +Resize +MinSize150x150
@@ -86,8 +85,8 @@ Initialize:
     TextType := A_IsUnicode ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE
     gl.glListBase(FontList)
     
-    VerticalPosition := -0.4
-    HorizontalPosition := -9.2
+    VerticalPosition := -2
+    HorizontalPosition := -6.2
     Angle := -25
     newlinepos := 0
     scale := 1
@@ -96,12 +95,11 @@ Initialize:
 return
 
 Update:
-    Thread, NoTimers
     gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     gl.glLoadIdentity()
     ;gl.glScalef(scale, scale, scale)
     gl.glRotatef(Angle, 1.0, 0.0, 0.0)
-    gl.glTranslatef(HorizontalPosition, VerticalPosition + newlinepos, -20)
+    gl.glTranslatef(HorizontalPosition, VerticalPosition + newlinepos, -10)
     
     if round(newlinepos, 2)
         newlinepos := newlinepos + 0.1
@@ -115,7 +113,7 @@ Update:
         gl.glTranslatef(0, 1, 0)
     }
     
-    gl.SwapBuffers(hDC)
+    DllCall("gdi32\SwapBuffers","UInt",hDC)
 return
 
 ResizeScene(PosX,PosY,Width,Height,FieldOfView := 45.0,ClipNear := 0.5,ClipFar := 100.0)

@@ -1,6 +1,7 @@
 #SingleInstance, Force
 
-    Width := 800, Height := 600
+    Width := 800
+    Height := 600
     Lines := ["1340 <Acuena> dunnu how to check that??"
     , "1340 <Worm002> wiggly worm"
     , "1340 <Acuena> msgbox it?"
@@ -13,10 +14,7 @@
     SetTimer, Update, 30
 Return
 
-; gl constants: nipeg.ca/htdocs/SDL_Perl/SDL/OpenGL/Constants.pm.html
-
 Initialize:
-    Ptr := A_PtrSize ? "Ptr" : "UInt" ;set compatibility constants
     hGDI32 := DllCall("LoadLibrary","Str","gdi32")
     gl := new OpenGL()
     
@@ -31,9 +29,9 @@ Initialize:
         NumPut(0   ,Struct, 8,"UChar") ;PFD_TYPE_RGBA
         NumPut(24  ,Struct, 9,"UChar") ;Color bit depth
         NumPut(16  ,Struct,23,"UChar") ;Depth buffer bit depth
-    DllCall("gdi32\SetPixelFormat","UInt",hDC,"Int",DllCall("gdi32\ChoosePixelFormat","UInt",hDC,Ptr,&Struct,"Int"),Ptr,&Struct)
+    DllCall("gdi32\SetPixelFormat","UInt",hDC,"Int",DllCall("gdi32\ChoosePixelFormat","UInt",hDC,"ptr",&Struct,"Int"),"ptr",&Struct)
     hRC := gl.wglCreateContext(hDC)
-    gl.wglMakeCurrent(hDC,hRC)
+    gl.wglMakeCurrent(hDC, hRC)
     
     gl.glShadeModel(0x1D01) ;GL_SMOOTH
     gl.glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -54,39 +52,41 @@ Initialize:
         NumPut(1,Struct,4,"Float")
         NumPut(1,Struct,8,"Float")
         NumPut(1,Struct,12,"Float") ;light with color 1,1,1
-    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1200,Ptr,&Struct) ;GL_LIGHT0, GL_AMBIENT
+    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1200,"ptr",&Struct) ;GL_LIGHT0, GL_AMBIENT
     
         NumPut(1,Struct,0,"Float")
         NumPut(1,Struct,4,"Float")
         NumPut(1,Struct,8,"Float")
         NumPut(1,Struct,12,"Float")
-    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1201,Ptr,&Struct) ;GL_LIGHT0, GL_DIFFUSE
+    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1201,"ptr",&Struct) ;GL_LIGHT0, GL_DIFFUSE
     
         NumPut(Temp1,Struct,0,"Float")
         NumPut(Temp2,Struct,4,"Float")
         NumPut(Temp3,Struct,8,"Float")
         NumPut(Temp4,Struct,12,"Float")
-    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1202,Ptr,&Struct) ;GL_LIGHT0, GL_SPECULAR
+    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1202,"ptr",&Struct) ;GL_LIGHT0, GL_SPECULAR
     
         NumPut(0,Struct,0,"Float")
         NumPut(0,Struct,4,"Float")
         NumPut(0,Struct,8,"Float")
         NumPut(1,Struct,12,"Float") ;positional light at 0,0,0
-    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1203,Ptr,&Struct) ;GL_LIGHT0, GL_POSITION
+    DllCall("opengl32\glLightfv","UInt",0x4000,"UInt",0x1203,"ptr",&Struct) ;GL_LIGHT0, GL_POSITION
     DllCall("opengl32\glLightf","UInt",0x4000,"UInt",0x1208,"Float",0.01) ;GL_LIGHT0, GL_LINEAR_ATTENUATION
 
     FontList := DllCall("opengl32\glGenLists","Int",256)
     hFont := DllCall("CreateFont","Int",-16,"Int",0,"Int",0,"Int",0,"Int",100,"UInt",0,"UInt",0,"UInt",0,"UInt",0,"UInt",4,"UInt",0,"UInt",4,"UInt",0,"Str","Arial")
     hTempFont := DllCall("SelectObject","UInt",hDC,"UInt",hFont)
+    
     VarSetCapacity(GlyphMetrics,6144,0) ;256 * 24
     DllCall("opengl32\wglUseFontOutlines" . (A_IsUnicode ? "W" : "A"),"UInt",hDC,"UInt",0,"UInt",256,"UInt",FontList,"Float",0,"Float",0.1,"Int",1,UPtr,&GlyphMetrics)
+    
     DllCall("SelectObject","UInt",hDC,"UInt",hTempFont)
     DllCall("DeleteObject","UInt",hFont)
     TextType := A_IsUnicode ? 0x1403 : 0x1401 ;GL_UNSIGNED_SHORT, GL_UNSIGNED_BYTE
     DllCall("opengl32\glListBase","UInt",FontList)
     
-    VerticalPosition := -0.4
-    HorizontalPosition := -9.2
+    VerticalPosition := -2
+    HorizontalPosition := -6.2
     Angle := -25
     newlinepos := 0
     scale := 1
@@ -108,7 +108,7 @@ Update:
     {
         line := lines[lines._maxindex() - (A_Index - 1)]
         DllCall("opengl32\glPushMatrix")
-        DllCall("opengl32\glCallLists", "Int", StrLen(line), "UInt", TextType, Ptr, &line)
+        DllCall("opengl32\glCallLists", "Int", StrLen(line), "UInt", TextType, "ptr", &line)
         DllCall("opengl32\glPopMatrix")
         DllCall("opengl32\glTranslatef", "Float", 0, "Float", 1, "Float", 0)
     }
@@ -116,12 +116,14 @@ Update:
     DllCall("gdi32\SwapBuffers","UInt",hDC)
 return
 
-ResizeScene(PosX,PosY,Width,Height,FieldOfView = 45.0,ClipNear = 0.5,ClipFar = 100.0)
+ResizeScene(PosX,PosY,Width,Height,FieldOfView := 45.0,ClipNear := 0.5,ClipFar := 100.0)
 {
     DllCall("opengl32\glViewport","Int",PosX,"Int",PosY,"Int",Width,"Int",Height)
     DllCall("opengl32\glMatrixMode","UInt",0x1701) ;GL_PROJECTION
     DllCall("opengl32\glLoadIdentity")
-    MaxY := ClipNear * Tan(FieldOfView * 0.00872664626), MaxX := MaxY * (Width / Height), DllCall("opengl32\glFrustum","Double",0 - MaxX,"Double",MaxX,"Double",0 - MaxY,"Double",MaxY,"Double",ClipNear,"Double",ClipFar)
+    MaxY := ClipNear * Tan(FieldOfView * 0.00872664626)
+    MaxX := MaxY * (Width / Height)
+    DllCall("opengl32\glFrustum","Double",0 - MaxX,"Double",MaxX,"Double",0 - MaxY,"Double",MaxY,"Double",ClipNear,"Double",ClipFar)
     DllCall("opengl32\glMatrixMode","UInt",0x1700) ;GL_MODELVIEW
 }
 
