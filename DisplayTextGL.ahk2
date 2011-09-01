@@ -1,8 +1,15 @@
 #SingleInstance, Force
 
+; Test script and demonstration of OpenGL library.
+; 
+; to add text just do lines.insert(text)
+; if you want it to scroll in nicely then also do newlinepos--
+; to remove a line from the top do lines.remove(1)
+; 
+
     Width := 800
     Height := 600
-    Lines := ["1340 <Acuena> dunnu how to check that??"
+    Lines := ["1340 <Acuena> dunno how to check that??"
     , "1340 <Worm002> wiggly worm"
     , "1340 <Acuena> msgbox it?"
     , "1341 <Uberi> yep"
@@ -89,13 +96,13 @@ Initialize:
     gl.glListBase(FontList)
     
     VerticalPosition := -0.2
-    VerticalPosition2 := -5.6
+    VerticalPosition2 := -7.2
     HorizontalPosition := -6.2
-    HorizontalPosition2 := -4.9
+    HorizontalPosition2 := -6.2
     ZPos := -10
-    ZPos2 := -6
+    ZPos2 := -7.3
     Angle := -25
-    Angle2 := 17
+    Angle2 := 19
     newlinepos := 0
     scale := 1
     
@@ -103,6 +110,10 @@ Initialize:
 return
 
 Update:
+    GuiControlGet, current_focus, Focus
+    if current_focus != "Edit1"
+        GuiControl, Focus, InputLine
+    
     gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     gl.glLoadIdentity()
     ;gl.glScalef(scale, scale, scale)
@@ -112,6 +123,7 @@ Update:
     if round(newlinepos, 2)
         newlinepos := newlinepos + 0.1
     
+    ; output the static lines
     loop % lines._maxindex()
     {
         line := lines[lines._maxindex() - (A_Index - 1)]
@@ -121,6 +133,7 @@ Update:
         gl.glTranslatef(0, 1, 0)
     }
     
+    ; output the current line
     gl.glLoadIdentity()
     gl.glRotatef(Angle2, 1.0, 0.0, 0.0)
     gl.glTranslatef(HorizontalPosition2, VerticalPosition2, zPos2)
@@ -129,7 +142,7 @@ Update:
     gl.glCallLists(StrLen(line), TextType, &line)
     gl.PopMatrix()
     
-    DllCall("gdi32\SwapBuffers","UInt",hDC)
+    DllCall("gdi32\SwapBuffers", "UInt", hDC)
 return
 
 ResizeScene(PosX, PosY, Width, Height, FieldOfView := 45.0, ClipNear := 0.5, ClipFar := 100.0)
@@ -173,6 +186,15 @@ ExitSub:
 ExitApp
 
 #IfWinActive 3D Scroller
+
+; Hotkeys: 
+;   Up,Down,Right,Left: move text that direction (x,y axis)
+;   WheelUp/WheelDown move text forward/back (z axis)
+;   Shift+Up,Down changes the angle
+;   
+; Modifiers:
+;   Use CTRL to change the position of the second text (current/edit control text)
+;   Use ALT to increment/decrement all of the above in 1/10 the amount
 
 Up::VerticalPosition += 1
 Down::VerticalPosition -= 1
