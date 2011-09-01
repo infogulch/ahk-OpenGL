@@ -15,7 +15,7 @@
     , "1341 <Uberi> yep"
     , "1341 <Uberi> MsgBox `% A_EventInfo"
     , "1341 <Uberi> before that line"
-    , "JUST START TYPING, PRESS ENTER"]
+    , "just start typing & press enter"]
     lines.current := ""
     
     Gosub, Initialize
@@ -55,8 +55,15 @@ Initialize:
     
     gl.glEnable(GL_LIGHTING)
     gl.glEnable(GL_LIGHT0)
-    ;gl.glEnable(GL_LINE_SMOOTH)
-    ;gl.glEnable(GL_BLEND)
+    
+    ; attempt at antialiasing, isn't working for me :(
+    ; gl.glEnable(GL_LINE_SMOOTH)
+    ; gl.glDisable(Gl_DEPTH_TEST)
+    ; gl.glEnable(GL_POLYGON_SMOOTH)
+    ; gl.glEnable(GL_BLEND)
+    ; gl.glDisable(GL_CULL_FACE)
+    ; gl.glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ONE)
+    ; gl.glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST)
     
     VarSetCapacity(Struct,16)
         NumPut(1,Struct,0,"Float")
@@ -124,8 +131,8 @@ Update:
     gl.glRotatef(Angle, 1.0, 0.0, 0.0)
     gl.glTranslatef(HorizontalPosition, VerticalPosition + newlinepos + 1, zPos)
     
-    if round(newlinepos, 2)
-        newlinepos := newlinepos + 0.1
+    if newlinepos
+        newlinepos := min(newlinepos + max(ABS(newlinepos)/7, 0.1), 0)
     
     ; output the static lines
     loop % lines._maxindex()
@@ -168,8 +175,11 @@ InputLineChange:
 return
 
 SubmitLine:
-    lines.insert(lines.current)
-    lines.current := ""
+    if lines.current == ""
+        VerticalPosition++
+    else
+        lines.insert(lines.current)
+        , lines.current := ""
     newlinepos -= 1
     GuiControl, , InputLine,
 return
