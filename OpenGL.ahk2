@@ -28,7 +28,7 @@
     You can always access all constants through the OpenGL class
         e.g.   gl.glEnable(OpenGL.GL_LINE_SMOOTH)
     
-    Namespaces: OpenGL, optionally: GL_*, GLU_*, GLUT_*
+    Namespaces: OpenGL, optionally: GL_*, GLU_*, WGL_*
 */
 
 class OpenGL {
@@ -81,8 +81,14 @@ class OpenGL {
             return OpenGL.__constants[key]
     }
     
-    class __structs {
+    class Struct {
+        __new( struct_name ) {
+            global OpenGL, _Struct
+            if ObjHasKey(OpenGL.Struct, struct_name)
+                return new _Struct(OpenGL.Struct[struct_name])
+        }
         
+        static GPU_DEVICE := "DWORD cb; CHAR DeviceName[32]; CHAR DeviceString[128]; DWORD Flags; RECT rcVirtualScreen;"
     }
     
     class __functions {
