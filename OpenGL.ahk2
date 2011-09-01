@@ -45,8 +45,6 @@ class OpenGL {
         if IsObject(types) && types.maxindex() >= args.maxindex()  ; allow types to be specified manually
             loop types.maxindex() 
                 args.insert((A_Index<<1)-1, types[A_Index])
-        ; if func ~= "i)gllightfv"
-            ; msgbox % func ", " viewobj(args)
         return DllCall("opengl32\" func, args*)
     }
     __new(global_constants := False) {
