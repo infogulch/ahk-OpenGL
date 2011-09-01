@@ -66,7 +66,7 @@ class OpenGL {
             for k,v in OpenGL.__constants
                 %k% := v
         }
-    } 
+    }
     __delete() {
         global OpenGL
         OpenGL.__instances--
@@ -110,8 +110,8 @@ class OpenGL {
         static glEdgeFlag                 := { arg_types: ["uchar"] }
         static glEdgeFlagv                := { arg_types: ["uchar*"] }
         static glScissor                  := { arg_types: ["int", "int", "int", "int"] }
-        static glClipPlane                := { arg_types: ["uint", "ptr"] } ;double * 4
-        static glGetClipPlane             := { arg_types: ["uint", "ptr"] } ;double * 4
+        static glClipPlane                := { arg_types: ["uint", "ptr"] }
+        static glGetClipPlane             := { arg_types: ["uint", "ptr"] }
         static glDrawBuffer               := { arg_types: ["uint"] }
         static glReadBuffer               := { arg_types: ["uint"] }
         static glEnable                   := { arg_types: ["uint"] }

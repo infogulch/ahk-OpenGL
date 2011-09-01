@@ -8,6 +8,7 @@
     , "1341 <Uberi> yep"
     , "1341 <Uberi> MsgBox `% A_EventInfo"
     , "1341 <Uberi> before that line"]
+    lines.current := ""
     
     Gosub, Initialize
     OnExit, ExitSub
@@ -19,6 +20,8 @@ Initialize:
     gl := new OpenGL(True)
     
     Gui, +LastFound +Resize +MinSize150x150
+    Gui, Add, Edit, vInputLine -WantReturn y-100 gInputLineChange
+    Gui, Add, Button, +Default gSubmitLine y-100
     hWindow := WinExist()
     
     hDC := DllCall("GetDC","UInt",hWindow)
@@ -60,10 +63,10 @@ Initialize:
         NumPut(1,Struct,12,"Float")
     gl.glLightfv(GL_LIGHT0, GL_DIFFUSE, &Struct)
     
-        NumPut(Temp1,Struct,0,"Float")
-        NumPut(Temp2,Struct,4,"Float")
-        NumPut(Temp3,Struct,8,"Float")
-        NumPut(Temp4,Struct,12,"Float")
+        NumPut(0,Struct,0,"Float")
+        NumPut(0,Struct,4,"Float")
+        NumPut(0,Struct,8,"Float")
+        NumPut(0,Struct,12,"Float")
     gl.glLightfv(GL_LIGHT0, GL_SPECULAR, &Struct)
     
         NumPut(0,Struct,0,"Float")
@@ -78,16 +81,21 @@ Initialize:
     hTempFont := DllCall("SelectObject","UInt",hDC,"UInt",hFont)
     
     VarSetCapacity(GlyphMetrics,6144,0) ;256 * 24
-    gl.wglUseFontOutlines(hDC,0,256,FontList,0,0.1,1,&GlyphMetrics)
+    gl.wglUseFontOutlines(hDC, 0, 256, FontList, 0, 0.1, WGL_FONT_POLYGONS, &GlyphMetrics)
     
     DllCall("SelectObject","UInt",hDC,"UInt",hTempFont)
     DllCall("DeleteObject","UInt",hFont)
     TextType := A_IsUnicode ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE
     gl.glListBase(FontList)
     
-    VerticalPosition := -2
+    VerticalPosition := -0.2
+    VerticalPosition2 := -5.6
     HorizontalPosition := -6.2
+    HorizontalPosition2 := -4.9
+    ZPos := -10
+    ZPos2 := -6
     Angle := -25
+    Angle2 := 17
     newlinepos := 0
     scale := 1
     
@@ -99,7 +107,7 @@ Update:
     gl.glLoadIdentity()
     ;gl.glScalef(scale, scale, scale)
     gl.glRotatef(Angle, 1.0, 0.0, 0.0)
-    gl.glTranslatef(HorizontalPosition, VerticalPosition + newlinepos, -10)
+    gl.glTranslatef(HorizontalPosition, VerticalPosition + newlinepos + 1, zPos)
     
     if round(newlinepos, 2)
         newlinepos := newlinepos + 0.1
@@ -113,10 +121,18 @@ Update:
         gl.glTranslatef(0, 1, 0)
     }
     
+    gl.glLoadIdentity()
+    gl.glRotatef(Angle2, 1.0, 0.0, 0.0)
+    gl.glTranslatef(HorizontalPosition2, VerticalPosition2, zPos2)
+    gl.PushMatrix()
+    line := lines.current
+    gl.glCallLists(StrLen(line), TextType, &line)
+    gl.PopMatrix()
+    
     DllCall("gdi32\SwapBuffers","UInt",hDC)
 return
 
-ResizeScene(PosX,PosY,Width,Height,FieldOfView := 45.0,ClipNear := 0.5,ClipFar := 100.0)
+ResizeScene(PosX, PosY, Width, Height, FieldOfView := 45.0, ClipNear := 0.5, ClipFar := 100.0)
 {
     global
     local MaxX, MaxY
@@ -128,6 +144,18 @@ ResizeScene(PosX,PosY,Width,Height,FieldOfView := 45.0,ClipNear := 0.5,ClipFar :
     gl.glFrustum(0 - MaxX, MaxX, 0 - MaxY, MaxY, ClipNear, ClipFar)
     gl.glMatrixMode(GL_MODELVIEW)
 }
+
+InputLineChange:
+    GuiControlGet, InputLine
+    lines.current := InputLine
+return
+
+SubmitLine:
+    lines.insert(lines.current)
+    lines.current := ""
+    newlinepos -= 1
+    GuiControl, , InputLine,
+return
 
 GuiSize:
     Width := A_GuiWidth OR 1
@@ -148,17 +176,39 @@ ExitApp
 
 Up::VerticalPosition += 1
 Down::VerticalPosition -= 1
-
 !Up::VerticalPosition += 0.1
 !Down::VerticalPosition -= 0.1
 
+^Up::VerticalPosition2 += 1
+^Down::VerticalPosition2 -= 1
+^!Up::VerticalPosition2 += 0.1
+^!Down::VerticalPosition2 -= 0.1
+
+WheelUp::ZPos += 1
+WheelDown::ZPos -= 1
+!WheelUp::ZPos += .1
+!WheelDown::ZPos -= .1
+
+^WheelUp::ZPos2 += 1
+^WheelDown::ZPos2 -= 1
+^!WheelUp::ZPos2 += .1
+^!WheelDown::ZPos2 -= .1
+
 +Up::Angle++
 +Down::Angle--
+
+^+Up::Angle2++
+^+Down::Angle2--
 
 Right::HorizontalPosition++
 Left::HorizontalPosition--
 !Right::HorizontalPosition += 0.1
 !Left::HorizontalPosition -= 0.1
+
+^Right::HorizontalPosition2++
+^Left::HorizontalPosition2--
+^!Right::HorizontalPosition2 += 0.1
+^!Left::HorizontalPosition2 -= 0.1
 
 F12::
     newlinepos := 0
