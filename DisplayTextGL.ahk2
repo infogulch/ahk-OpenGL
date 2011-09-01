@@ -14,7 +14,8 @@
     , "1340 <Acuena> msgbox it?"
     , "1341 <Uberi> yep"
     , "1341 <Uberi> MsgBox `% A_EventInfo"
-    , "1341 <Uberi> before that line"]
+    , "1341 <Uberi> before that line"
+    , "JUST START TYPING, PRESS ENTER"]
     lines.current := ""
     
     Gosub, Initialize
@@ -111,8 +112,11 @@ return
 
 Update:
     GuiControlGet, current_focus, Focus
-    if current_focus != "Edit1"
+    if current_focus != "Edit1" && current_focus != ""
+    {
+        msgbox % current_focus
         GuiControl, Focus, InputLine
+    }
     
     gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     gl.glLoadIdentity()
