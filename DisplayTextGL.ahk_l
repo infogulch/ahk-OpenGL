@@ -119,11 +119,8 @@ return
 
 Update:
     GuiControlGet, current_focus, Focus
-    if current_focus != "Edit1" && current_focus != ""
-    {
-        msgbox % current_focus
+    if (current_focus != "Edit1" && current_focus != "")
         GuiControl, Focus, InputLine
-    }
     
     gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     gl.glLoadIdentity()
@@ -156,7 +153,7 @@ Update:
     DllCall("gdi32\SwapBuffers", "UInt", hDC)
 return
 
-ResizeScene(PosX, PosY, Width, Height, FieldOfView := 45.0, ClipNear := 0.5, ClipFar := 100.0)
+ResizeScene(PosX, PosY, Width, Height, FieldOfView = 45.0, ClipNear = 0.5, ClipFar = 100.0)
 {
     global
     local MaxX, MaxY
@@ -175,7 +172,7 @@ InputLineChange:
 return
 
 SubmitLine:
-    if lines.current == ""
+    if (lines.current == "")
         VerticalPosition++
     else
         lines.insert(lines.current)
@@ -185,8 +182,8 @@ SubmitLine:
 return
 
 GuiSize:
-    Width := A_GuiWidth OR 1
-    Height := A_GuiHeight OR 1
+    Width := A_GuiWidth ? A_GuiWidth : 1
+    Height := A_GuiHeight ? A_GuiHeight : 1
     ResizeScene(0,0,Width,Height,55.0,0.5,Width / 4)
 return
 
@@ -256,4 +253,18 @@ return
 
 +F12::lines.remove(1)
 
-#Include OpenGL.ahk2
+#Include OpenGL.ahk_l
+
+max(n, x*) {
+    for k,v in x
+        if (v > n)
+            n := v
+    return n
+}
+
+min(n, x*) {
+    for k,v in x
+        if (v < n)
+            n := v
+    return n
+}

@@ -40,11 +40,11 @@ class OpenGL {
     __call(func, args*) {
         types := this[func].arg_types
         if IsObject(types) && types.maxindex() >= args.maxindex()  ; allow types to be specified manually
-            loop types.maxindex() 
+            loop % types.maxindex() 
                 args.insert((A_Index<<1)-1, types[A_Index])
         return DllCall("opengl32\" func, args*)
     }
-    __new(global_constants := False) {
+    __new(global_constants = False) {
         global
         local k,v
         OpenGL.__instances++
@@ -82,7 +82,13 @@ class OpenGL {
     }
     
     ;*** STRUCTS ***
+    static DWORD := new _Struct("union { DWORD dw; struct { WORD lo; WORD hi; }; };") ; maybe
+    static RECT := new _Struct("LONG left; LONG top; LONG right; LONG bottom;")
     static GPU_DEVICE := new _Struct("DWORD cb; CHAR DeviceName[32]; CHAR DeviceString[128]; DWORD Flags; RECT rcVirtualScreen;")
+    static POINTFLOAT := new _Struct("FLOAT x; FLOAT y;")
+    static GLYPHMETRICSFLOAT := new _Struct("FLOAT gmfBlackBoxX; FLOAT gmfBlackBoxY; POINTFLOAT gmfptGlyphOrigin; FLOAT gmfCellIncX; FLOAT gmfCellIncY;")
+    static LAYERPLANEDESCRIPTOR := new _Struct("WORD nSize; WORD nVersion; DWORD dwFlags; BYTE iPixelType; BYTE cColorBits; BYTE cRedBits; BYTE cRedShift; BYTE cGreenBits; BYTE cGreenShift; BYTE cBlueBits; BYTE cBlueShift; BYTE cAlphaBits; BYTE cAlphaShift; BYTE cAccumBits; BYTE cAccumRedBits; BYTE cAccumGreenBits; BYTE cAccumBlueBits; BYTE cAccumAlphaBits; BYTE cDepthBits; BYTE cStencilBits; BYTE cAuxBuffers; BYTE iLayerPlane; BYTE bReserved; COLORREF crTransparent;")
+    static WGLSWAP := new _Struct("HDC hdc; UINT uiFlags;")
     ;*   structs
     
     ;*** GL FUNCTIONS ***
